@@ -7,7 +7,7 @@ Record_file=[root,'/TrackingProcess/trackPath/Record.mat'];
 load(Record_file);
 filename= [root,'/TrackingProcess/trackPath/ObjectProcess.mat'];
 load(filename);
-CenterList = textread([root,'/list.txt'],'%s');
+CenterList = textread([root,'/Plist.txt'],'%s');
 
 if count<image_num
 	recordRelationFileName = OneOfRelationFileName(count,root);
@@ -110,6 +110,7 @@ if count<image_num
 		m=size(fillup);
 		
 		if size(fillup)~=0
+			
 			for i=1:1:m(2)
 				Record(count,fillup(i))=Record(count-1,fillup(i));
 				%fprintf(1,'ok \n');
@@ -123,6 +124,9 @@ if count<image_num
 
 		if size(findNull)~=0
 			%disp(findNull);
+			LogFileName=[root,'/TrackingProcess/trackPath/Log/Log'];
+			LogFile= fopen([LogFileName,'.txt'],'a');
+			fprintf(LogFile,'The no.%d particle disappears in the no.%d image.\n', findNull, count);
 			for i=1:1:size(findNull)
 				last_particle_center_name=char(CenterList(Record(count,findNull(i))));
             	last_particle_center_coordinate = textread([root, '/particle_center', last_particle_center_name,'.txt']);
@@ -131,6 +135,7 @@ if count<image_num
 					if abs(last_particle_center_coordinate(ObjectProcess(1,Record(count,findNull(i)),findNull(i)),1)-lx(findMatch(j)))<=((count-Record(count,findNull(i)))*3) && abs(last_particle_center_coordinate(ObjectProcess(1,Record(count,findNull(i)),findNull(i)),2)-ly(findMatch(j)))<=((count-Record(count,findNull(i)))*3)
 						disp('ok');
 						ObjectProcess(1,count,findNull(i))=former(findMatch(j));
+						fprintf(LogFile,'The no.%d particle is recovered in the no.%d image.\n', findNull(i), count);
 						Record(count,findNull(i))=count;
 						if ObjectProcess(1,count+1,findNull(i))==0
 							ObjectProcess(1,count+1,findNull(i))=later(findMatch(j));
@@ -152,6 +157,7 @@ if count<image_num
 						if abs(last_particle_center_coordinate(ObjectProcess(1,Record(count,findNull(i)),findNull(i)),1)-particle_center_coordinate(k,1))<=((count-Record(count,findNull(i)))*3) && abs(last_particle_center_coordinate(ObjectProcess(1,Record(count,findNull(i)),findNull(i)),2)-particle_center_coordinate(k,2))<=((count-Record(count,findNull(i)))*3)
 							ObjectProcess(1,count+1,findNull(i))=k;
 							Record(count+1,findNull(i))=count+1;
+							fprintf(LogFile,'The no.%d particle is recovered in the no.%d image.\n', findNull(i), count+1);
 						end
 					end
 				end
@@ -199,6 +205,8 @@ for obj = 1:1:objnum
     fprintf(ObjectFile,'\n');
 end
 
+recordObjectProcess(image_num,objnum,root,count);
+
 if count==image_num-1
     for obj = 1:1:objnum
 	    if length(num2str(obj)) == 1
@@ -214,8 +222,9 @@ if count==image_num-1
         end
         fprintf(ObjectFile,'\n');
 	end
-	recordObjectProcess(image_num,objnum,root);
+	recordObjectProcess(image_num,objnum,root,count+1);
 end
+
 
 fclose('all');
 
